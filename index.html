@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Flip Book</title>
+  <link rel="stylesheet" href="./index.css">
+
+</head>
+<body class="body">
+<div class="flipbook" id="flipbook"></div>
+
+<script src="pdf.mjs" type="module"></script>
+<script type="module">
+    // If absolute URL from the remote server is provided, configure the CORS
+    // header on that server.
+    var url = './portfolio.pdf';
+  
+    // Loaded via <script> tag, create shortcut to access PDF.js exports.
+    var { pdfjsLib } = globalThis;
+  
+    // The workerSrc property shall be specified.
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
+  
+    const canvases = [
+        document.getElementById('canvas-1'),
+    ]
+
+    const contexts = canvases.map(canvas => canvas.getContext('2d'))
+
+    var pdfDoc = null,
+        pageNum = 1,
+        pageRendering = false,
+        pageNumPending = null,
+        scale = 2;
+    
+    function getRenderContext(page,canvas, ctx) {
+        var viewport = page.getViewport({scale: scale});
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        canvas.style.width = "100%";
+        canvas.style.height = "auto";
+
+        // Render PDF page into canvas context
+        return {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+    }
+  
+    /**
+     * Get page info from document, resize canvas accordingly, and render page.
+     * @param num Page number.
+     */
+    function renderPage(num) {
+      pageRendering = true;
+      const pageNums = Array.from({length: canvases.length}, (_, i) => i + num)
+      console.log(pageNums)
+      // Using promise to fetch the page
+      Promise.all(pageNums.map(pageNum => pdfDoc.getPage(pageNum))).then((pages) => {
+        const renderTasks = pages.map((page,i) => ({page, renderContext: getRenderContext(page,canvases[i],contexts[i])}))
+        .map(({page, renderContext}) => page.render(renderContext).promise)
+
+
+        Promise.all(renderTasks).then(() => {
+          pageRendering = false;
+          if (pageNumPending !== null) {
+            // New page rendering is pending
+            renderPage(pageNumPending);
+            pageNumPending = null;
+          }
+        })
+      })
+    }
+  
+    /**
+     * If another page rendering in progress, waits until the rendering is
+     * finised. Otherwise, executes rendering immediately.
+     */
+    function queueRenderPage(num) {
+      if (pageRendering) {
+        pageNumPending = num;
+      } else {
+        renderPage(num);
+      }
+    }
+  
+    /**
+     * Displays previous page.
+     */
+    function onPrevPage() {
+      if (pageNum <= 1) {
+        return;
+      }
+      pageNum = pageNum - 1;
+      queueRenderPage(pageNum);
+    }
+    document.getElementById('prev').addEventListener('click', onPrevPage);
+  
+    /**
+     * Displays next page.
+     */
+    function onNextPage() {
+      if (pageNum >= pdfDoc.numPages) {
+        return;
+      }
+      pageNum = pageNum + 1;
+      queueRenderPage(pageNum);
+    }
+    document.getElementById('next').addEventListener('click', onNextPage);
+  
+    /**
+     * Asynchronously downloads PDF.
+     */
+    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
+      pdfDoc = pdfDoc_;
+  
+      // Initial/first page rendering
+      renderPage(pageNum);
+    });
+  </script>
+    
+  <div class="arrows">
+    <button id="prev" class="arrow">
+        <svg fill="#000000" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 511.641 511.641" xml:space="preserve">
+            <g>
+                <g>
+                    <path d="M148.32,255.76L386.08,18c4.053-4.267,3.947-10.987-0.213-15.04c-4.16-3.947-10.667-3.947-14.827,0L125.707,248.293
+                        c-4.16,4.16-4.16,10.88,0,15.04L371.04,508.667c4.267,4.053,10.987,3.947,15.04-0.213c3.947-4.16,3.947-10.667,0-14.827
+                        L148.32,255.76z"/>
+                </g>
+            </g>
+        </svg>
+    </button>
+    <button id="next" class="arrow">
+        <svg fill="#000000" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 511.949 511.949" xml:space="preserve">
+        <g>
+            <g>
+                <path d="M386.235,248.308L140.902,2.975c-4.267-4.053-10.987-3.947-15.04,0.213c-3.947,4.16-3.947,10.667,0,14.827l237.76,237.76
+                    l-237.76,237.867c-4.267,4.053-4.373,10.88-0.213,15.04c4.053,4.267,10.88,4.373,15.04,0.213c0.107-0.107,0.213-0.213,0.213-0.213
+                    l245.333-245.333C390.395,259.188,390.395,252.468,386.235,248.308z"/>
+            </g>
+        </g>
+        </svg>
+    </button>
+  </div>
+  
+  <div class="canvas-container">
+  <canvas id="canvas-1"></canvas>
+  </div>
+
+</body>
+</html>

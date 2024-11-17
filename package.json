@@ -1,0 +1,14 @@
+{
+  "name": "ximena-porta",
+  "version": "1.0.0",
+  "description": "Ximenas Website",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server ./ -o -p 9999"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
