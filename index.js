@@ -9,13 +9,9 @@ var { pdfjsLib } = globalThis;
 pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
 
 var pdfDoc = null,
-    pageNum = 1,
-    pageRendering = false,
-    pageNumPending = null,
     scale = 2;
 
 function getRenderContext(page,canvas, ctx) {
-    console.log(page)
     var viewport = page.getViewport({scale: scale});
     canvas.height = viewport.height;
     canvas.width = viewport.width;
