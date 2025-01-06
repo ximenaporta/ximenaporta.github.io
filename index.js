@@ -15,6 +15,7 @@ var pdfDoc = null,
     scale = 2;
 
 function getRenderContext(page,canvas, ctx) {
+    console.log(page)
     var viewport = page.getViewport({scale: scale});
     canvas.height = viewport.height;
     canvas.width = viewport.width;
@@ -40,8 +41,6 @@ function renderPage(num, canvas) {
     })
 }
 
-
-
 /**
  * Asynchronously downloads PDF.
  */
@@ -56,6 +55,4 @@ pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
       renderPage(page, canvas);
     }
 
-    // Initial/first page rendering
-    renderPage(pageNum);
 });
