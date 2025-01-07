@@ -6,7 +6,7 @@ var url = './portfolio.pdf';
 var { pdfjsLib } = globalThis;
 
 // The workerSrc property shall be specified.
-pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = './build/pdf.worker.mjs';
 
 var pdfDoc = null,
     scale = 2;
